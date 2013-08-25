@@ -11,15 +11,24 @@ class CardPlayer
   end
 
   def discard_hand
-    discards = @hand
-    @hand = []
+    discards, @hand = @hand, []
     discards
+  end
+
+  def has_a_hand?
+    @hand.empty?
+  end
+
+  def hand_to_s
+    cards = []
+    @hand.each { |card| cards << "#{card.to_s}" }
+    cards.join(", ") << "."
   end
 end
 
 
 class Pontoon
-  attr_reader :num_of_players, :players, :game_over
+  attr_reader :num_of_players, :players
 
   def initialize(num_of_players=1)
     @num_of_players = num_of_players
@@ -49,13 +58,8 @@ class Pontoon
   end
 
   def show_players_hands
-    players_hands = ""
-    @players.each do |player|
-      players_hands << "#{player.name}: "
-      cards = []
-      player.hand.each { |card| cards << "#{card.to_s}" }
-      players_hands << cards.join(", ") << ". "
-    end
-    players_hands
+    @players.map { |player| "#{player.name}: #{player.hand_to_s}" }.join(' ')
   end
 end
+
+game = Pontoon.new
