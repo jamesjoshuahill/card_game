@@ -9,11 +9,12 @@ module DeckOfCards
     end
 
     def to_s
-      "#{@face_value} #{@suit}"
+      "#{@face_value} of #{@suit}"
     end
   end
 
   class Deck
+    attr_reader :full_deck
     SUITS = %w{Hearts Diamonds Spades Clubs}
     FACE_VALUES = (2..10).to_a.concat %w{Jack Queen King Ace}
 
