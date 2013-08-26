@@ -16,13 +16,13 @@ class CardPlayer
   end
 
   def has_a_hand?
-    @hand.empty?
+    not @hand.empty?
   end
 
   def hand_to_s
     cards = []
     @hand.each { |card| cards << "#{card.to_s}" }
-    cards.join(", ") << "."
+    cards.join(", ")
   end
 end
 
@@ -31,34 +31,57 @@ class Pontoon
   attr_reader :num_of_players, :players
 
   def initialize(num_of_players=1)
+    @banker = CardPlayer.new('Banker')
+
     @num_of_players = num_of_players
-    @deck = DeckOfCards::Deck.new
-    @discard_pile = []
     @players = []
     @num_of_players.times do |num|
       print "Please enter player #{num + 1}'s name:  "
-      @players << CardPlayer.new(gets.chomp())
+      @players << CardPlayer.new(gets.chomp)
     end
-    @game_over = false
 
-    deal_round
+    @deck = DeckOfCards::Deck.new
+    @discard_pile = []
+    @hands_played = 0
   end
 
   def deal_round
-    @players.each do |player|
-      @discard_pile.concat player.discard_hand
+    clear_table
+    
+    hands_to_deal = num_of_players + 1
+    new_cards = @deck.deal(hands_to_deal * 2)
+
+    new_cards.each_slice(hands_to_deal) do |round_of_cards|
+      @players.each { |player| player.hand.concat round_of_cards.pop }
+      @banker.hand.concat round_of_cards.pop
     end
-    2.times do
-      @players.each { |player| player.hand.concat @deck.deal }
-    end
+    @hands_played += 1
+  end
+
+  def clear_table
+    @discard_pile.concat @banker.discard_hand
+    @players.each { |player| @discard_pile.concat player.discard_hand }
   end
 
   def game_over?
-    @game_over
+    #to be implemented...
+
   end
 
-  def show_players_hands
-    @players.map { |player| "#{player.name}: #{player.hand_to_s}" }.join(' ')
+  def players_hands
+    @players.map { |player| "#{player.name}: #{player.hand_to_s}." }.join("\n")
+  end
+
+  def bankers_hand
+    "#{@banker.name}: #{@banker.hand_to_s}."
+  end
+
+  def cards_on_the_table
+    show_players_hands + "\n" + show_bankers_hand
+  end
+
+  def hands_played
+    "Hands played #{@hands_played}."
   end
 end
 
