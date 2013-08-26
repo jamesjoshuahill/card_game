@@ -20,9 +20,13 @@ class CardPlayer
   end
 
   def hand_to_s
-    cards = []
-    @hand.each { |card| cards << "#{card.to_s}" }
-    cards.join(", ")
+    if has_a_hand?
+      cards = []
+      @hand.each { |card| cards << "#{card.to_s}" }
+      cards.join(", ")
+    else
+      "No cards in hand"
+    end
   end
 end
 
@@ -52,10 +56,64 @@ class Pontoon
     new_cards = @deck.deal(hands_to_deal * 2)
 
     new_cards.each_slice(hands_to_deal) do |round_of_cards|
-      @players.each { |player| player.hand.concat round_of_cards.pop }
-      @banker.hand.concat round_of_cards.pop
+      @players.each { |player| player.hand << round_of_cards.pop }
+      @banker.hand << round_of_cards.pop
     end
     @hands_played += 1
+  end
+
+  def play_round
+    raise StandardError.new(
+      'No cards. Deal a round of cards to play.') unless @hands_played > 0
+    @players.each do |player|
+      puts "#{player.name} has #{player.hand_to_s}. " +
+        "Total: #{face_value_of_hand(player.hand)}. Stick or twist?"
+      until bust(player.hand)
+        print "> "; choice = gets.chomp.downcase
+        if choice == "stick" || choice == "s"
+          break
+        elsif choice == "twist" || choice == "t"
+          new_card = @deck.deal.first
+          puts "#{player.name} twists...#{new_card.to_s}."
+          player.hand << new_card
+        else
+          puts "Say again?"
+        end
+      end
+      if bust(player.hand)
+        puts "#{player.name} is bust!"
+      else
+        puts "#{player.name} sticks with #{player.hand_to_s}."
+      end
+    end
+  end
+
+  def face_value_of_hand(hand)
+    face_value = 0
+    aces = 0
+    hand.each do |card|
+      if card.face_value.is_a?(Integer)
+        face_value += card.face_value
+      elsif card.face_value == "Ace"
+        face_value += 1
+        aces += 1
+      else
+        face_value += 10
+      end
+    end
+    while aces > 0
+      if face_value + 10 <= 21
+        face_value += 10
+        aces -= 1
+      else
+        break
+      end
+    end
+    face_value
+  end
+
+  def bust(hand)
+    face_value_of_hand(hand) > 21
   end
 
   def clear_table
@@ -77,11 +135,7 @@ class Pontoon
   end
 
   def cards_on_the_table
-    show_players_hands + "\n" + show_bankers_hand
-  end
-
-  def hands_played
-    "Hands played #{@hands_played}."
+    players_hands + "\n" + bankers_hand
   end
 end
 
