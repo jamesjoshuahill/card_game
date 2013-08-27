@@ -53,7 +53,14 @@ class Pontoon
     clear_table
     
     hands_to_deal = num_of_players + 1
-    new_cards = @deck.deal(hands_to_deal * 2)
+    
+    begin
+      new_cards = @deck.deal(hands_to_deal * 2)
+    rescue
+      puts "Starting a new deck of cards."
+      @deck = DeckOfCards::Deck.new
+      new_cards = @deck.deal(hands_to_deal * 2)
+    end
 
     new_cards.each_slice(hands_to_deal) do |round_of_cards|
       @players.each { |player| player.hand << round_of_cards.pop }
@@ -65,25 +72,31 @@ class Pontoon
   def play_round
     raise StandardError.new(
       'No cards. Deal a round of cards to play.') unless @hands_played > 0
+    
     @players.each do |player|
+      player_hand_value = face_value_of_hand(player.hand)
+
       puts "#{player.name} has #{player.hand_to_s}. " +
-        "Total: #{face_value_of_hand(player.hand)}. Stick or twist?"
+        "Total: #{player_hand_value}. Stick or twist?"
       until bust(player.hand)
         print "> "; choice = gets.chomp.downcase
         if choice == "stick" || choice == "s"
           break
         elsif choice == "twist" || choice == "t"
           new_card = @deck.deal.first
-          puts "#{player.name} twists...#{new_card.to_s}."
           player.hand << new_card
+          puts "#{player.name} twists...#{new_card.to_s}. " +
+            "Total: #{player_hand_value}."
         else
           puts "Say again?"
         end
       end
       if bust(player.hand)
-        puts "#{player.name} is bust!"
+        puts "#{player.name} is bust! #{player.hand_to_s}. " +
+          "Total: #{player_hand_value}"
       else
-        puts "#{player.name} sticks with #{player.hand_to_s}."
+        puts "#{player.name} sticks with #{player.hand_to_s}. " +
+          "Total: #{player_hand_value}"
       end
     end
   end

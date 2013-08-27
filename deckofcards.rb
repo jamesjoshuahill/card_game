@@ -39,6 +39,7 @@ module DeckOfCards
     def deal(num=1)
       raise ArgumentError.new(
         "Not enough cards left to deal #{num}.") unless self.count >= num
+      
       @deck.pop(num)
     end
 
